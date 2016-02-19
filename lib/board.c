@@ -64,10 +64,10 @@ void increment_adjacent_mine_count(uint8_t* tile) {
 void place_mine(struct board *board, int x, int y) {
 	uint8_t *tile = get_tile_at(board, x, y);
 	int8_t i;
+	uint8_t *adjacent_tiles[8];
 	*tile |= TILE_MINE;
 
 	// Increase the mine counts on all adjacent tiles
-	uint8_t *adjacent_tiles[8];
 	get_adjacent_tiles(board, tile, adjacent_tiles);
 	for ( i = 0; i < 8; i++) {
 		uint8_t *adjacent_tile = adjacent_tiles[i];
