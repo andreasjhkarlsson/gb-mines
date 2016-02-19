@@ -63,12 +63,13 @@ void increment_adjacent_mine_count(uint8_t* tile) {
 
 void place_mine(struct board *board, int x, int y) {
 	uint8_t *tile = get_tile_at(board, x, y);
+	int8_t i;
 	*tile |= TILE_MINE;
 
 	// Increase the mine counts on all adjacent tiles
 	uint8_t *adjacent_tiles[8];
 	get_adjacent_tiles(board, tile, adjacent_tiles);
-	for (int i = 0; i < 8; i++) {
+	for ( i = 0; i < 8; i++) {
 		uint8_t *adjacent_tile = adjacent_tiles[i];
 		if (adjacent_tile) {
 			increment_adjacent_mine_count(adjacent_tile);
@@ -77,8 +78,10 @@ void place_mine(struct board *board, int x, int y) {
 }
 
 void generate_mines(struct board *board) {
-	for (int x = 0; x < board->width; x++) {
-		for (int y = 0; y < board->height; y++) {
+	int8_t x;
+	for (x = 0; x < board->width; x++) {
+		int8_t y;
+		for (y = 0; y < board->height; y++) {
 			float r = (float)rand() / (float)RAND_MAX;
 			if (r < board->mine_density && !(x == board->cursor_x && y == board->cursor_y)) {
 				place_mine(board, x, y);
@@ -94,8 +97,9 @@ void board_deinit(struct board *board) {
 
 void open_adjacent_tiles(struct board *board, uint8_t *tile) {
 	uint8_t *adjacent_tiles[8];
+	int8_t i;
 	get_adjacent_tiles(board, tile, adjacent_tiles);
-	for (int i = 0; i < 8; i++) {
+	for (i = 0; i < 8; i++) {
 		uint8_t *adjacent_tile = adjacent_tiles[i];
 		if (adjacent_tile && !(*adjacent_tile & TILE_OPENED) && !(*adjacent_tile & TILE_FLAG)) {
 			open_tile(adjacent_tile);
@@ -112,11 +116,12 @@ void open_adjacent_tiles(struct board *board, uint8_t *tile) {
 }
 
 void open_tile_at_cursor(struct board *board) {
+	uint8_t* tile;
 	if (!board->mines_placed) {
 		generate_mines(board);
 	}
 
-	uint8_t* tile = get_tile_at(board, board->cursor_x, board->cursor_y);
+	tile = get_tile_at(board, board->cursor_x, board->cursor_y);
 
 	// If this tile is already opened and has a mine count,
 	// it should open all adjacent tiles instead. This mimics
