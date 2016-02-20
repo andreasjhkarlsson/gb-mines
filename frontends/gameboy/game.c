@@ -1,5 +1,7 @@
 #include <gb/gb.h>
 #include <gb/drawing.h>
+#include <board.h>
+#include <stdlib.h>
 #include "game.h"
 
 #define GRID_WIDTH 20
@@ -29,8 +31,8 @@ unsigned char tiles[] =
 	0x00,0x7E,0x00,0x7E,0x00,0x7E,0x00,0x00,
 	0x00,0x00,0x08,0x08,0x18,0x18,0x38,0x38, // Flagged
 	0x18,0x18,0x08,0x08,0x08,0x08,0x00,0x00,
-	0x00,0x00,0x7E,0x7E,0x7E,0x7E,0x7E,0x7E, // Blacked
-	0x7E,0x7E,0x7E,0x7E,0x7E,0x7E,0x00,0x00
+	0x18,0x18,0x24,0x3C,0x7E,0x5A,0xBD,0xFF, // Mine
+	0xBD,0xFF,0x7E,0x5A,0x24,0x3C,0x18,0x18
 };
 
 unsigned char sprites[] =
@@ -51,8 +53,13 @@ enum tile {
 	Eight = 8,
 	Unopened = 9,
 	Flagged = 10,
-	Blacked = 11
+	Mine = 11
 };
+
+char digit_to_tile(int digit)
+{
+	return (char)digit; // Actually the same for now.
+}
 
 void set_tile(int x, int y, unsigned char tile)
 {
@@ -71,21 +78,45 @@ int wrap(int value, int max)
 	return value;
 }
 
+void render_board(struct board* board)
+{
+	int x, y;
+	uint8_t* tile;
+	char sprite;
+	for (x = 0;x<board->width;x += 1)
+	{
+		for (y = 0;y < board->height;y += 1)
+		{
+			tile = get_tile_at(board, x, y);
+
+			if (*tile&TILE_OPENED && *tile&TILE_MINE)
+				sprite = Mine;
+			else if (*tile&TILE_OPENED)
+				sprite = digit_to_tile(adjacent_mine_count(tile));
+			else if (*tile&TILE_FLAG)
+				sprite = Flagged;
+			else
+				sprite = Unopened;
+
+			set_tile(x, y, sprite);
+		}
+	}
+}
+
 void play_game()
 {
-	int marker_x = GRID_WIDTH / 2, marker_y = GRID_HEIGHT / 2;
-	int x, y;
 	char input;
+	struct board board;
+
+	srand(DIV_REG);
+
+	board_init(&board, GRID_WIDTH, GRID_HEIGHT, 0.1);
+	board.cursor_x = board.width / 2;
+	board.cursor_y = board.height / 2;
 
 	// Setup background
 	set_bkg_data(0, 12, tiles);
-	for (x = 0;x<GRID_WIDTH;x += 1)
-	{
-		for (y = 0;y < GRID_HEIGHT;y += 1)
-		{
-			set_tile(x, y, Unopened);
-		}
-	}
+
 	SHOW_BKG;
 
 	// Setup sprites
@@ -94,14 +125,32 @@ void play_game()
 	SHOW_SPRITES;
 	SPRITES_8x8;
 
-	while (1)
+	render_board(&board);
+
+	while (!board.game_over)
 	{
 		input = joypad();
-		if (input&J_UP) marker_y = wrap(marker_y - 1,GRID_HEIGHT-1);
-		if (input&J_DOWN) marker_y = wrap(marker_y + 1, GRID_HEIGHT - 1);
-		if (input&J_LEFT) marker_x = wrap(marker_x - 1, GRID_WIDTH - 1);
-		if (input&J_RIGHT) marker_x = wrap(marker_x + 1, GRID_WIDTH - 1);
-		move_marker(marker_x, marker_y);
+		if (input&J_UP)
+			board.cursor_y = wrap(board.cursor_y - 1, GRID_HEIGHT - 1);
+		if (input&J_DOWN)
+			board.cursor_y = wrap(board.cursor_y + 1, GRID_HEIGHT - 1);
+		if (input&J_LEFT)
+			board.cursor_x = wrap(board.cursor_x - 1, GRID_WIDTH - 1);
+		if (input&J_RIGHT)
+			board.cursor_x = wrap(board.cursor_x + 1, GRID_WIDTH - 1);
+		if (input&J_A)
+		{
+			open_tile_at_cursor(&board);
+			render_board(&board);
+		}
+		if (input&J_B)
+		{
+			toggle_flag_at_cursor(&board);
+			render_board(&board);
+		}
+		move_marker(board.cursor_x, board.cursor_y);
 		delay(75);
 	}
+
+	while (!(joypad()&J_START));
 }

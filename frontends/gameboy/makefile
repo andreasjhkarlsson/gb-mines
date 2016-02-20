@@ -1,5 +1,5 @@
 GBDKN=./gbdk-n
-CC=$(GBDKN)/bin/gbdk-n-compile.sh --std-c99
+CC=$(GBDKN)/bin/gbdk-n-compile.sh --std-c99 -I "../../lib"
 CL=$(GBDKN)/bin/gbdk-n-link.sh
 CROM=$(GBDKN)/bin/gbdk-n-make-rom.sh
 
@@ -9,7 +9,7 @@ sweeper.gb: obj/main.rel obj/board.rel obj/start.rel obj/game.rel
 
 obj/main.rel: main.c gbdk-n
 	mkdir -p obj
-	$(CC) -I "../../game_logic" main.c -o obj/main.rel
+	$(CC) main.c -o obj/main.rel
 
 obj/start.rel: start.c gbdk-n
 	mkdir -p obj

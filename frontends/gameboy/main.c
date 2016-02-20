@@ -9,6 +9,10 @@
 void main()
 {
 	DISPLAY_ON;
-	show_start();
-	play_game();
+	while (1)
+	{
+		show_start();
+		play_game();
+		delay(250);
+	}
 }
