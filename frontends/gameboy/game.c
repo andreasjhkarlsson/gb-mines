@@ -33,6 +33,12 @@ unsigned char tiles[] =
 	0x7E,0x7E,0x7E,0x7E,0x7E,0x7E,0x00,0x00
 };
 
+unsigned char sprites[] =
+{
+	0xFF,0xFF,0x81,0x81,0x81,0x81,0x81,0x81, // Marker
+	0x81,0x81,0xC1,0x81,0xA1,0xC1,0xFF,0xFF
+};
+
 enum tile {
 	Zero = 0,
 	One = 1,
@@ -53,9 +59,25 @@ void set_tile(int x, int y, unsigned char tile)
 	set_bkg_tiles(x, y, 1, 1, &tile);
 }
 
-void init()
+void move_marker(int x, int y)
 {
+	move_sprite(0, (SCREENWIDTH / GRID_WIDTH) * (x+1), (SCREENHEIGHT / GRID_HEIGHT) * (y+2));
+}
+
+int wrap(int value, int max)
+{
+	if (value < 0) return max;
+	if (value > max) return 0;
+	return value;
+}
+
+void play_game()
+{
+	int marker_x = GRID_WIDTH / 2, marker_y = GRID_HEIGHT / 2;
 	int x, y;
+	char input;
+
+	// Setup background
 	set_bkg_data(0, 12, tiles);
 	for (x = 0;x<GRID_WIDTH;x += 1)
 	{
@@ -64,21 +86,22 @@ void init()
 			set_tile(x, y, Unopened);
 		}
 	}
-}
+	SHOW_BKG;
 
-void play_game()
-{
-	init();
-	set_tile(2, 10, Zero);
-	set_tile(3, 10, One);
-	set_tile(4, 10, Two);
-	set_tile(5, 10, Three);
-	set_tile(6, 10, Four);
-	set_tile(7, 10, Five);
-	set_tile(8, 10, Six);
-	set_tile(9, 10, Seven);
-	set_tile(10, 10, Eight);
-	set_tile(11, 10, Flagged);
-	set_tile(12, 10, Blacked);
-	
+	// Setup sprites
+	set_sprite_data(0, 1, sprites);
+	set_sprite_tile(0, 0);
+	SHOW_SPRITES;
+	SPRITES_8x8;
+
+	while (1)
+	{
+		input = joypad();
+		if (input&J_UP) marker_y = wrap(marker_y - 1,GRID_HEIGHT-1);
+		if (input&J_DOWN) marker_y = wrap(marker_y + 1, GRID_HEIGHT - 1);
+		if (input&J_LEFT) marker_x = wrap(marker_x - 1, GRID_WIDTH - 1);
+		if (input&J_RIGHT) marker_x = wrap(marker_x + 1, GRID_WIDTH - 1);
+		move_marker(marker_x, marker_y);
+		delay(75);
+	}
 }

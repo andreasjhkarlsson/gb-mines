@@ -8,7 +8,6 @@
 
 void main()
 {
-	SHOW_BKG;
 	DISPLAY_ON;
 	show_start();
 	play_game();
