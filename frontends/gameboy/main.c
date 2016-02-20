@@ -2,20 +2,14 @@
 #include <gb/drawing.h>
 #include <asm/types.h>
 #include <board.h>
-#include "logo.h"
+#include "start.h"
+#include "game.h"
 
-
-void show_logo()
-{
-	set_bkg_data(0, logo_tile_count, logo_tile_data);
-	set_bkg_tiles(0, 0, logo_tile_map_width, logo_tile_map_height, logo_map_data);
-	SHOW_BKG;
-	DISPLAY_ON;
-}
 
 void main()
 {
-	show_logo();
-
-
+	SHOW_BKG;
+	DISPLAY_ON;
+	show_start();
+	play_game();
 }
