@@ -19,9 +19,9 @@ obj/game.rel: game.c gbdk-n
 	mkdir -p obj
 	$(CC) game.c -o obj/game.rel
 
-obj/board.rel: ../../game_logic/board.c gbdk-n 
+obj/board.rel: ../../lib/board.c gbdk-n 
 	mkdir -p obj
-	$(CC) ../../game_logic/board.c -o obj/board.rel
+	$(CC) ../../lib/board.c -o obj/board.rel
 
 gbdk-n:
 	git clone https://github.com/rotmoset/gbdk-n
