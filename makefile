@@ -1,23 +1,35 @@
-C_FLAGS = -std=c99 -Wall
+GBDKN=./gbdk-n
+CC=$(GBDKN)/bin/gbdk-n-compile.sh --std-c99 -I "../../lib"
+CL=$(GBDKN)/bin/gbdk-n-link.sh
+CROM=$(GBDKN)/bin/gbdk-n-make-rom.sh
 
-executable = bin/terminal-mines
-library = bin/libminesweeper.a
+sweeper.gb: obj/main.rel obj/board.rel obj/start.rel obj/game.rel
+	$(CL) obj/main.rel obj/start.rel obj/game.rel obj/board.rel -o obj/a.ihx
+	$(CROM) obj/a.ihx sweeper.gb
 
-$(executable): $(library) frontends/ncurses/*.c
-	$(CC) $(C_FLAGS) frontends/ncurses/*.c -Ilib -Ifrontends/ncurses -Lbin -o $@ -lncurses -lminesweeper
+obj/main.rel: main.c gbdk-n
+	mkdir -p obj
+	$(CC) main.c -o obj/main.rel
 
-$(library): lib/board.c
-	mkdir -p bin
-	$(CC) $(C_FLAGS) -c lib/board.c -o bin/board.o
-	ar rcs $@ bin/board.o
-	rm bin/board.o
+obj/start.rel: start.c gbdk-n
+	mkdir -p obj
+	$(CC) start.c -o obj/start.rel
 
-.PHONY: test, clean
-test: bin/test
-	bin/test
+obj/game.rel: game.c gbdk-n
+	mkdir -p obj
+	$(CC) game.c -o obj/game.rel
 
-bin/test: $(library)
-	$(CC) $(C_FLAGS) tests/board_tests.c -Ilib -Itests -Lbin -lminesweeper -o $@
+obj/board.rel: ../../lib/board.c gbdk-n 
+	mkdir -p obj
+	$(CC) ../../lib/board.c -o obj/board.rel
 
+gbdk-n:
+	git clone https://github.com/rotmoset/gbdk-n
+	$(MAKE) -C gbdk-n
+
+.PHONY: clean
 clean:
-	rm -rf bin/
+	rm -f obj/*
+	rm -f sweeper.gb
+	rm -rf gbdk-n
+
