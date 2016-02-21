@@ -14,6 +14,5 @@ void main()
 	{
 		difficulty = show_start();
 		play_game(difficulty);
-		delay(250);
 	}
 }

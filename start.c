@@ -1,5 +1,6 @@
 #include <gb/gb.h>
 #include "start.h"
+#include "about.h"
 #include "game.h"
 
 // Generated from: http://www.chrisantonellis.com/gameboy/gbtdg/
@@ -276,8 +277,6 @@ void show_difficulty(int difficulty)
 	SHOW_BKG;
 }
 
-
-
 int show_start()
 {
 	int difficulty = NORMAL;
@@ -307,6 +306,14 @@ int show_start()
 			if (difficulty == INSANE) difficulty = EASY;
 			else difficulty += 1;
 			show_difficulty(difficulty);
+		}
+
+		if (input&J_SELECT)
+		{
+			show_about();
+			// Recursion takes care of restoring background
+			// Hopefully sdcc generates tail calls or else this could lead to stackoverflow
+			return show_start(); 
 		}
 
 		if (input&J_START)
