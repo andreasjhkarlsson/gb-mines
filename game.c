@@ -173,4 +173,6 @@ void play_game(int difficulty)
 	}
 	hide_marker();
 	while (!(joypad()&J_START));
+
+	board_deinit(&board);
 }
