@@ -1,7 +1,7 @@
 #include <gb/gb.h>
 #include <gb/drawing.h>
 #include <asm/types.h>
-#include <board.h>
+#include <minesweeper.h>
 #include "start.h"
 #include "game.h"
 

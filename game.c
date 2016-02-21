@@ -1,6 +1,6 @@
 #include <gb/gb.h>
 #include <gb/drawing.h>
-#include <board.h>
+#include <minesweeper.h>
 #include <stdlib.h>
 #include "game.h"
 

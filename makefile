@@ -1,11 +1,12 @@
 GBDKN=./gbdk-n
-CC=$(GBDKN)/bin/gbdk-n-compile.sh --std-c99 -I "../../lib"
+CC=$(GBDKN)/bin/gbdk-n-compile.sh --std-c99 -I "libminesweeper/include"
 CL=$(GBDKN)/bin/gbdk-n-link.sh
 CROM=$(GBDKN)/bin/gbdk-n-make-rom.sh
 
-sweeper.gb: obj/main.rel obj/board.rel obj/start.rel obj/game.rel
-	$(CL) obj/main.rel obj/start.rel obj/game.rel obj/board.rel -o obj/a.ihx
-	$(CROM) obj/a.ihx sweeper.gb
+bin/sweeper.gb: obj/main.rel obj/libminesweeper.rel obj/start.rel obj/game.rel
+	$(CL) obj/main.rel obj/start.rel obj/game.rel obj/libminesweeper.rel -o obj/a.ihx
+	mkdir -p bin
+	$(CROM) obj/a.ihx bin/sweeper.gb
 
 obj/main.rel: main.c gbdk-n
 	mkdir -p obj
@@ -19,17 +20,19 @@ obj/game.rel: game.c gbdk-n
 	mkdir -p obj
 	$(CC) game.c -o obj/game.rel
 
-obj/board.rel: ../../lib/board.c gbdk-n 
+obj/libminesweeper.rel: libminesweeper/lib/minesweeper.c gbdk-n 
 	mkdir -p obj
-	$(CC) ../../lib/board.c -o obj/board.rel
+	$(CC) libminesweeper/lib/minesweeper.c -o obj/libminesweeper.rel
 
-gbdk-n:
-	git clone https://github.com/rotmoset/gbdk-n
+
+.PHONY: gbdk-n
+gbdk-n: gbdk-n/lib/gb.lib
+
+gbdk-n/lib/gb.lib: 
 	$(MAKE) -C gbdk-n
 
 .PHONY: clean
 clean:
-	rm -f obj/*
-	rm -f sweeper.gb
-	rm -rf gbdk-n
+	rm -rf obj
+	rm -rf bin
 

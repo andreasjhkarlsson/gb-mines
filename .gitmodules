@@ -1,0 +1,6 @@
+[submodule "libminesweeper"]
+	path = libminesweeper
+	url = https://github.com/accatyyc/libminesweeper
+[submodule "gbdk-n"]
+	path = gbdk-n
+	url = https://github.com/rotmoset/gbdk-n
