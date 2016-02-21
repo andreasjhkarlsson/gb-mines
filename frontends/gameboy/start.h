@@ -1,6 +1,6 @@
 #ifndef START_H
 #define START_H
 
-void show_start();
+int show_start();
 
 #endif

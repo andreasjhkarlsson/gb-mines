@@ -7,6 +7,8 @@
 #define GRID_WIDTH 20
 #define GRID_HEIGHT 18
 
+#define MARKER_NB 0
+
 unsigned char tiles[] =
 {
 	0x00,0x00,0x00,0x00,0x00,0x00,0x18,0x00, // 0
@@ -37,6 +39,8 @@ unsigned char tiles[] =
 
 unsigned char sprites[] =
 {
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00, // Empty
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 	0xFF,0xFF,0x81,0x81,0x81,0x81,0x81,0x81, // Marker
 	0x81,0x81,0xC1,0x81,0xA1,0xC1,0xFF,0xFF
 };
@@ -68,7 +72,17 @@ void set_tile(int x, int y, unsigned char tile)
 
 void move_marker(int x, int y)
 {
-	move_sprite(0, (SCREENWIDTH / GRID_WIDTH) * (x+1), (SCREENHEIGHT / GRID_HEIGHT) * (y+2));
+	move_sprite(MARKER_NB, (SCREENWIDTH / GRID_WIDTH) * (x+1), (SCREENHEIGHT / GRID_HEIGHT) * (y+2));
+}
+
+void show_marker()
+{
+	set_sprite_tile(MARKER_NB, 1);
+}
+
+void hide_marker()
+{
+	set_sprite_tile(MARKER_NB, 0);
 }
 
 int wrap(int value, int max)
@@ -103,25 +117,31 @@ void render_board(struct board* board)
 	}
 }
 
-void play_game()
+
+void load_tiles()
+{
+	// Background tiles
+	set_bkg_data(0, 12, tiles);
+
+	// Sprite tiles
+	set_sprite_data(0, 2, sprites);
+}
+
+void play_game(int difficulty)
 {
 	char input;
 	struct board board;
 
 	srand(DIV_REG);
 
-	board_init(&board, GRID_WIDTH, GRID_HEIGHT, 0.1);
+	board_init(&board, GRID_WIDTH, GRID_HEIGHT, 0.1 * (difficulty+1));
 	board.cursor_x = board.width / 2;
 	board.cursor_y = board.height / 2;
-
-	// Setup background
-	set_bkg_data(0, 12, tiles);
+	
+	load_tiles();
+	show_marker();
 
 	SHOW_BKG;
-
-	// Setup sprites
-	set_sprite_data(0, 1, sprites);
-	set_sprite_tile(0, 0);
 	SHOW_SPRITES;
 	SPRITES_8x8;
 
@@ -151,6 +171,6 @@ void play_game()
 		move_marker(board.cursor_x, board.cursor_y);
 		delay(75);
 	}
-
+	hide_marker();
 	while (!(joypad()&J_START));
 }
