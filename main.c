@@ -8,11 +8,9 @@
 
 void main()
 {
-	int difficulty;
 	DISPLAY_ON;
 	while (1)
 	{
-		difficulty = show_start();
-		play_game(difficulty);
+		show_start();
 	}
 }
