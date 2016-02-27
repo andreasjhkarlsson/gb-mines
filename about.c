@@ -1,6 +1,7 @@
 #include <gb/gb.h>
 #include "about.h"
 #include "graphics.h"
+#include "utils.h"
 
 TILESET (
 	about_tileset,
@@ -261,6 +262,5 @@ void show_about()
 	place_tiles(loaded_tiles, &about_map, 0, 0);
 
 	SHOW_BKG;
-	while (!(joypad()&J_START));
-	while (joypad()&J_START);
+	while (!button_pressed(J_START, -1) && !button_pressed(J_A, -1));
 }

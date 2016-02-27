@@ -3,6 +3,7 @@
 #include "about.h"
 #include "game.h"
 #include "graphics.h"
+#include "utils.h"
 
 // Generated from: http://www.chrisantonellis.com/gameboy/gbtdg/
 
@@ -279,7 +280,6 @@ void show_start()
 {
 
 	int difficulty = NORMAL;
-	int input;
 
 	place_tiles(load_tileset(&startscreen_tiles), &startscreen_map,0,0);
 
@@ -289,33 +289,27 @@ void show_start()
 	HIDE_SPRITES;
 	while (1)
 	{
-		input = joypad();
-
-		if (input&J_LEFT)
+		if (button_pressed(J_LEFT,-1))
 		{
-			while (joypad()&J_LEFT); // Wait for button up
 			if (difficulty == EASY) difficulty = INSANE;
 			else difficulty -= 1;
 			show_difficulty(difficulty);
 		}
 
-		if (input&J_RIGHT)
+		if (button_pressed(J_RIGHT, -1))
 		{
-			while (joypad()&J_RIGHT); // Wait for button up
 			if (difficulty == INSANE) difficulty = EASY;
 			else difficulty += 1;
 			show_difficulty(difficulty);
 		}
 
-		if (input&J_SELECT)
+		if (button_pressed(J_SELECT, -1))
 		{
 			push_graphics();
 			show_about();
-			pop_graphics();
-			
+			pop_graphics();	
 		}
-
-		if (input&J_START)
+		if (button_pressed(J_START, -1))
 		{
 			push_graphics();
 			play_game(difficulty);

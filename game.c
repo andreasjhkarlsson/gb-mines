@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "game.h"
 #include "graphics.h"
+#include "utils.h"
 
 #define GRID_WIDTH 20
 #define GRID_HEIGHT 18
@@ -177,7 +178,7 @@ void seed_prng()
 
 void play_game(int difficulty)
 {
-	char input;
+
 	bool first_open = true;
 	struct board* board;
 	uint8_t *game_memory = malloc(minimum_buffer_size(GRID_WIDTH, GRID_HEIGHT));
@@ -197,16 +198,15 @@ void play_game(int difficulty)
 
 	while (!board->_game_over)
 	{
-		input = joypad();
-		if (input&J_UP)
+		if (button_pressed(J_UP,50))
 			move_cursor(board, UP);
-		if (input&J_DOWN)
+		if (button_pressed(J_DOWN, 50))
 			move_cursor(board, DOWN);
-		if (input&J_LEFT)
+		if (button_pressed(J_LEFT, 50))
 			move_cursor(board, LEFT);
-		if (input&J_RIGHT)
+		if (button_pressed(J_RIGHT, 50))
 			move_cursor(board, RIGHT);
-		if (input&J_A)
+		if (button_pressed(J_A, -1))
 		{
 			// Add more entropy to prng first time we open a tile
 			if (first_open)
@@ -217,7 +217,7 @@ void play_game(int difficulty)
 			open_tile_at_cursor(board);
 			render_board(board);
 		}
-		if (input&J_B)
+		if (button_pressed(J_B, -1))
 		{
 			toggle_flag_at_cursor(board);
 			render_board(board);
@@ -228,8 +228,7 @@ void play_game(int difficulty)
 	hide_marker();
 	show_game_over();
 
-	while (!(joypad()&J_START));
-	while (joypad()&J_START);
+	while (!button_pressed(J_START, -1));
 
 	free(game_memory);
 }

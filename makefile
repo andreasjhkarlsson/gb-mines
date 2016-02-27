@@ -3,10 +3,14 @@ CC=$(GBDKN)/bin/gbdk-n-compile.sh --std-c99 -I "libminesweeper/include"
 CL=$(GBDKN)/bin/gbdk-n-link.sh
 CROM=$(GBDKN)/bin/gbdk-n-make-rom.sh
 
-bin/sweeper.gb: obj/main.rel obj/libminesweeper.rel obj/start.rel obj/game.rel obj/about.rel obj/graphics.rel
-	$(CL) obj/main.rel obj/start.rel obj/game.rel obj/libminesweeper.rel obj/about.rel obj/graphics.rel -o obj/a.ihx
+bin/sweeper.gb: obj/main.rel obj/libminesweeper.rel obj/start.rel obj/game.rel obj/about.rel obj/graphics.rel obj/utils.rel
+	$(CL) obj/main.rel obj/start.rel obj/game.rel obj/libminesweeper.rel obj/about.rel obj/graphics.rel obj/utils.rel -o obj/a.ihx
 	mkdir -p bin
 	$(CROM) obj/a.ihx bin/sweeper.gb
+
+obj/utils.rel: utils.c
+	mkdir -p obj
+	$(CC) utils.c -o obj/utils.rel
 
 obj/main.rel: main.c gbdk-n
 	mkdir -p obj
