@@ -131,17 +131,23 @@ void load_tiles()
 	set_sprite_data(0, 2, sprites);
 }
 
+// Seed prng using current time (8 bit) and previous seed.
+// Call multiple times at unpredictable moments (like user input) to increase entropy.
+void seed_prng()
+{
+	srand((rand()<<8)|DIV_REG);
+}
+
 void play_game(int difficulty)
 {
 	char input;
+	bool first_open = true;
 	struct board* board;
 	uint8_t *game_memory = malloc(minimum_buffer_size(GRID_WIDTH, GRID_HEIGHT));
 
-	srand(DIV_REG);
+	seed_prng();
 
 	board = board_init(GRID_WIDTH, GRID_HEIGHT, 0.1 * (difficulty+1), game_memory);
-	board->cursor_x = GRID_WIDTH / 2;
-	board->cursor_y = GRID_HEIGHT / 2;
 	
 	load_tiles();
 	show_marker();
@@ -165,6 +171,12 @@ void play_game(int difficulty)
 			move_cursor(board, RIGHT);
 		if (input&J_A)
 		{
+			// Add more entropy to prng first time we open a tile
+			if (first_open)
+			{
+				seed_prng();
+				first_open = false;
+			}
 			open_tile_at_cursor(board);
 			render_board(board);
 		}
