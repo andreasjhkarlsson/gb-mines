@@ -8,7 +8,7 @@ struct tileset
 	int count;
 };
 
-#define TILESET(NAME,COUNT,...) const unsigned char NAME##_data_ [] = {__VA_ARGS__}; struct tileset NAME = {.count = COUNT, .tiles = NAME##_data_}
+#define TILESET(NAME,...) const unsigned char NAME##_data_ [] = {__VA_ARGS__}; struct tileset NAME = {.count = sizeof(NAME##_data_) / 16, .tiles = NAME##_data_}
 
 struct loaded_tileset
 {
