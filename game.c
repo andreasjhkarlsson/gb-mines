@@ -102,9 +102,9 @@ void render_board(struct board* board)
 	int x, y;
 	uint8_t* tile;
 	char sprite;
-	for (x = 0;x<board->width;x += 1)
+	for (x = 0;x<GRID_WIDTH;x += 1)
 	{
-		for (y = 0;y < board->height;y += 1)
+		for (y = 0;y < GRID_HEIGHT;y += 1)
 		{
 			tile = get_tile_at(board, x, y);
 
@@ -122,7 +122,6 @@ void render_board(struct board* board)
 	}
 }
 
-
 void load_tiles()
 {
 	// Background tiles
@@ -135,13 +134,14 @@ void load_tiles()
 void play_game(int difficulty)
 {
 	char input;
-	struct board board;
+	struct board* board;
+	uint8_t *game_memory = malloc(minimum_buffer_size(GRID_WIDTH, GRID_HEIGHT));
 
 	srand(DIV_REG);
 
-	board_init(&board, GRID_WIDTH, GRID_HEIGHT, 0.1 * (difficulty+1));
-	board.cursor_x = board.width / 2;
-	board.cursor_y = board.height / 2;
+	board = board_init(GRID_WIDTH, GRID_HEIGHT, 0.1 * (difficulty+1), game_memory);
+	board->cursor_x = GRID_WIDTH / 2;
+	board->cursor_y = GRID_HEIGHT / 2;
 	
 	load_tiles();
 	show_marker();
@@ -150,35 +150,35 @@ void play_game(int difficulty)
 	SHOW_SPRITES;
 	SPRITES_8x8;
 
-	render_board(&board);
+	render_board(board);
 
-	while (!board.game_over)
+	while (!board->_game_over)
 	{
 		input = joypad();
 		if (input&J_UP)
-			move_cursor(&board, UP);
+			move_cursor(board, UP);
 		if (input&J_DOWN)
-			move_cursor(&board, DOWN);
+			move_cursor(board, DOWN);
 		if (input&J_LEFT)
-			move_cursor(&board, LEFT);
+			move_cursor(board, LEFT);
 		if (input&J_RIGHT)
-			move_cursor(&board, RIGHT);
+			move_cursor(board, RIGHT);
 		if (input&J_A)
 		{
-			open_tile_at_cursor(&board);
-			render_board(&board);
+			open_tile_at_cursor(board);
+			render_board(board);
 		}
 		if (input&J_B)
 		{
-			toggle_flag_at_cursor(&board);
-			render_board(&board);
+			toggle_flag_at_cursor(board);
+			render_board(board);
 		}
-		move_marker(board.cursor_x, board.cursor_y);
+		move_marker(board->cursor_x, board->cursor_y);
 		delay(75);
 	}
 	hide_marker();
 	while (!(joypad()&J_START));
 	while (joypad()&J_START);
 
-	board_deinit(&board);
+	free(game_memory);
 }
