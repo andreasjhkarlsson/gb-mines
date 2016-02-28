@@ -1,11 +1,10 @@
-## gb-mines
-
+<img src="https://github.com/rotmoset/gb-mines/blob/master/media/cover.png?raw=true" width="250"><br />
 A minesweeper implementation for the Nintendo Gameboy.
 
 ## Screenshots
 
 ![1](http://i.imgur.com/PeFUxNN.png)
-![2](http://i.imgur.com/0guBAWQ.png)
+![2](http://i.imgur.com/RqYRULL.png)
 
 #### Prerequisites
 
