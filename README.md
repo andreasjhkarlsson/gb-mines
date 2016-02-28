@@ -2,6 +2,11 @@
 
 A minesweeper implementation for the Nintendo Gameboy.
 
+## Screenshots
+
+![1](http://i.imgur.com/PeFUxNN.png)
+![2](http://i.imgur.com/0guBAWQ.png)
+
 #### Prerequisites
 
 * [libminesweeper](https://github.com/accatyyc/libminesweeper) - small optmized game logic library for minesweeper (included as submodule)
