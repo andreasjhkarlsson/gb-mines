@@ -128,6 +128,27 @@ void render_board(struct board* board)
 	}
 }
 
+void show_won_game()
+{
+	static const unsigned long bitmap[] = {
+		0x0000, 0x0000, 0x0F00, 0x30C0, 0x5020,
+		0x5220, 0xBB10, 0xBA90, 0x13A48, 0x11248,
+		0x11248, 0x13A48, 0xBA90, 0xBB10, 0x5220,
+		0x5020, 0x30C0, 0x0F00, 0x0000, 0x000
+	};
+
+	int y, x;
+	for (y = 0;y < GRID_HEIGHT; y++)
+	{
+		for (x = 0;x < GRID_WIDTH;x++)
+		{
+			int bit = (bitmap[x] >> ((GRID_HEIGHT - 1) - y)) & 1;
+			place_tile(loaded_game_tiles, bit ? White : Black, x, y);
+		}
+		delay(75);
+	}
+}
+
 void show_game_over()
 {
 	// Monotone bitmap where every element is row on screen.
@@ -196,7 +217,7 @@ void play_game(int difficulty)
 
 	render_board(board);
 
-	while (!board->_game_over)
+	while (board->_state != BOARD_GAME_OVER && board->_state != BOARD_WIN)
 	{
 		if (button_pressed(J_UP,50))
 			move_cursor(board, UP);
@@ -226,7 +247,11 @@ void play_game(int difficulty)
 		delay(75);
 	}
 	hide_marker();
-	show_game_over();
+	
+	if (board->_state == BOARD_WIN)
+		show_won_game();
+	else if (board->_state == BOARD_GAME_OVER)
+		show_game_over();
 
 	while (!button_pressed(J_START, -1));
 
