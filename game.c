@@ -319,7 +319,7 @@ void show_flag_count(uint16_t flags)
 	show_double_row_digit(flags % 10, 13, 16);
 }
 
-uint16_t game_time;
+
 
 void show_time(uint16_t time)
 {
@@ -328,37 +328,6 @@ void show_time(uint16_t time)
 	show_double_row_digit(time % 10, 19, 16);
 }
 
-void render_board(struct board* board)
-{
-	int16_t x, y;
-	uint8_t* tile;
-	int8_t sprite;
-	uint16_t flag_count = 0;
-	for (x = 0;x<GRID_WIDTH;x += 1)
-	{
-		for (y = 0;y < GRID_HEIGHT;y += 1)
-		{
-			tile = get_tile_at(board, x, y);
-
-			if (*tile&TILE_OPENED && *tile&TILE_MINE)
-				sprite = Mine;
-			else if (*tile&TILE_OPENED)
-				sprite = digit_to_tile(adjacent_mine_count(tile));
-			else if (*tile&TILE_FLAG)
-			{
-				sprite = Flagged;
-				flag_count++;
-			}
-			else
-				sprite = Unopened;
-
-			set_tile(x, y, sprite);
-		}
-	}
-	show_flag_count(flag_count);
-	show_mine_count(board->_mine_count);
-	show_time(game_time);
-}
 
 void show_won_game()
 {
@@ -447,27 +416,73 @@ void render_footer()
 	place_tiles(load_tileset(&footer_tileset), &footer_tilemap, 0, 16);
 }
 
-void on_timer()
-{
+static uint16_t game_time;
 
+// Called 16 times / second
+void on_timer_overflow()
+{
+	game_time++;
 }
 
 void start_timer()
 {
-
+	disable_interrupts();
+	add_TIM(on_timer_overflow);
+	TAC_REG |= 4; // Start timer at 4096 Hz
+	TIMA_REG = 0; // Reset timer
+	TMA_REG = 0; // Restart timer at 0 on overflow
+	game_time = 0;
+	enable_interrupts();
+	set_interrupts(TIM_IFLAG|VBL_IFLAG);
 }
 
 void stop_timer()
 {
-
+	disable_interrupts();
+	TAC_REG = 0;
+	enable_interrupts();
 }
+
+void render_board(struct board* board)
+{
+	int16_t x, y;
+	uint8_t* tile;
+	int8_t sprite;
+	uint16_t flag_count = 0;
+	for (x = 0;x < GRID_WIDTH;x += 1)
+	{
+		for (y = 0;y < GRID_HEIGHT;y += 1)
+		{
+			tile = get_tile_at(board, x, y);
+
+			if (*tile&TILE_OPENED && *tile&TILE_MINE)
+				sprite = Mine;
+			else if (*tile&TILE_OPENED)
+				sprite = digit_to_tile(adjacent_mine_count(tile));
+			else if (*tile&TILE_FLAG)
+			{
+				sprite = Flagged;
+				flag_count++;
+			}
+			else
+				sprite = Unopened;
+
+			set_tile(x, y, sprite);
+		}
+	}
+	show_flag_count(flag_count);
+	show_mine_count(board->_mine_count);
+}
+
+static unsigned char tilemap_buffer[20*18];
 
 void play_game(int8_t difficulty)
 {
+	uint16_t display_time = 0;
 	bool first_open = true;
 	struct board* board;
 	uint8_t *game_memory = malloc(minimum_buffer_size(GRID_WIDTH, GRID_HEIGHT));
-	static unsigned char tilemap_buffer[GRID_WIDTH*GRID_HEIGHT];
+	
 	// 1st seed
 	seed_prng();
 
@@ -486,14 +501,14 @@ void play_game(int8_t difficulty)
 
 	while (board->_state != BOARD_GAME_OVER && board->_state != BOARD_WIN)
 	{
-
-		if (button_pressed(J_UP,50))
+		disable_interrupts();
+		if (button_pressed(J_UP, 0))
 			move_cursor(board, UP);
-		if (button_pressed(J_DOWN, 50))
+		if (button_pressed(J_DOWN, 0))
 			move_cursor(board, DOWN);
-		if (button_pressed(J_LEFT, 50))
+		if (button_pressed(J_LEFT, 0))
 			move_cursor(board, LEFT);
-		if (button_pressed(J_RIGHT, 50))
+		if (button_pressed(J_RIGHT, 0))
 			move_cursor(board, RIGHT);
 		if (button_pressed(J_A, -1))
 		{
@@ -503,10 +518,17 @@ void play_game(int8_t difficulty)
 				// 2nd seed
 				seed_prng();
 				render_footer();
-				first_open = false;
+				show_time(0);
 			}
 			
 			open_tile_at_cursor(board);
+
+			if (first_open)
+			{
+				start_timer();
+				first_open = false;
+			}
+
 			render_board(board);
 		}
 		if (button_pressed(J_B, -1))
@@ -514,14 +536,24 @@ void play_game(int8_t difficulty)
 			toggle_flag_at_cursor(board);
 			render_board(board);
 		}
+
 		move_marker(board->cursor_x, board->cursor_y);
+
+		if (display_time != game_time/16)
+		{
+			display_time = game_time/16;
+			show_time(display_time);
+		}
+
+		enable_interrupts();
 		delay(75);
 	}
 
+	stop_timer();
 	hide_marker();
 	
 	// Save current tilemap
-	get_bkg_tiles(0, 0, GRID_WIDTH, GRID_HEIGHT, tilemap_buffer);
+	get_bkg_tiles(0, 0, 20, 18, tilemap_buffer);
 
 	if (board->_state == BOARD_WIN)
 		show_won_game();
@@ -537,7 +569,7 @@ void play_game(int8_t difficulty)
 		if (button_pressed(J_SELECT, 0))
 		{
 			push_graphics();
-			set_bkg_tiles(0, 0, GRID_WIDTH, GRID_HEIGHT, tilemap_buffer);
+			set_bkg_tiles(0, 0, 20, 18, tilemap_buffer);
 			while (button_pressed(J_SELECT, 0));
 			pop_graphics();
 		}
