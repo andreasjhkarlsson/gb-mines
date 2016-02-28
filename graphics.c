@@ -3,15 +3,15 @@
 #include <gb/gb.h>
 
 // Tiledata buffers are too big to be stored in heap.
-unsigned char tiledata_stack[360 * 4];
+uint8_t tiledata_stack[360 * 4];
 
 struct graphics
 {
 	struct loaded_tileset* first_tileset;
 	struct graphics* next_graphics;
-	unsigned char* saved_tilemap;
-	unsigned char saved_lcdc;
-	unsigned char stack_depth;
+	uint8_t* saved_tilemap;
+	uint8_t saved_lcdc;
+	uint8_t stack_depth;
 } base = {.first_tileset = NULL, .next_graphics = NULL, .stack_depth = 0};
 
 // Top of graphics stack
@@ -76,7 +76,7 @@ struct loaded_tileset* load_tileset(struct tileset* tileset)
 {
 	struct loaded_tileset* last_tileset = graphics->first_tileset;
 	struct loaded_tileset* loaded_tileset;
-	int offset = 0;
+	int16_t offset = 0;
 
 	// Do not load same tileset multiple times (checks the first loaded tileset)
 	if (last_tileset && last_tileset->tileset == tileset)
@@ -113,7 +113,7 @@ struct loaded_tileset* load_tileset(struct tileset* tileset)
 	return loaded_tileset;
 }
 
-struct tilemap* load_tilemap(unsigned char* map, int width, int height)
+struct tilemap* load_tilemap(uint8_t* map, int16_t width, int16_t height)
 {
 	struct tilemap* tilemap = (struct tilemap*) malloc(sizeof(struct tilemap));
 	tilemap->map = map;
@@ -123,17 +123,19 @@ struct tilemap* load_tilemap(unsigned char* map, int width, int height)
 }
 
 
-void place_tiles(struct loaded_tileset* tileset, struct tilemap* tilemap, int dx, int dy)
+void place_tiles(struct loaded_tileset* tileset, struct tilemap* tilemap, int16_t dx, int16_t dy)
 {
-	unsigned char tile;
-	int x, y;
+	uint8_t tile;
+	int16_t x, y;
 
+	// If the tilemap is loaded at position 0 then we don't have to recalc tilemap
 	if (tileset->loaded_at == 0)
 	{
 		set_bkg_tiles(dx, dy, tilemap->width, tilemap->height, tilemap->map);
 		return;
 	}
 
+	// Set individual tiles (not very fast, but needed to recalc tilemap)
 	for (x=0;x < tilemap->width;x++)
 	{
 		for (y=0;y < tilemap->height;y++)
@@ -144,8 +146,8 @@ void place_tiles(struct loaded_tileset* tileset, struct tilemap* tilemap, int dx
 	}
 }
 
-void place_tile(struct loaded_tileset* tileset, int tile, int x, int y)
+void place_tile(struct loaded_tileset* tileset, uint16_t tile, int16_t x, int16_t y)
 {
-	unsigned char tileset_tile = (unsigned char)tileset->loaded_at + tile;
+	uint8_t tileset_tile = (uint8_t)tileset->loaded_at + tile;
 	set_bkg_tiles(x, y, 1, 1, &tileset_tile);
 }

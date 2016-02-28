@@ -116,6 +116,7 @@ unsigned char sprites[] =
 	0x81,0x81,0xC1,0x81,0xA1,0xC1,0xFF,0xFF
 };
 
+// Offsets in game_tiles
 enum tile {
 	Zero = 0,
 	One = 1,
@@ -133,12 +134,13 @@ enum tile {
 	White = 13
 };
 
-char digit_to_tile(int digit)
+// Digit to tile offset in game_tiles
+uint8_t digit_to_tile(uint8_t digit)
 {
-	return (char)digit; // Actually the same for now.
+	return (uint8_t)digit; // Actually the same for now.
 }
 
-void move_marker(int x, int y)
+void move_marker(int16_t x, int16_t y)
 {
 	move_sprite(MARKER_NB, (SCREENWIDTH / GRID_WIDTH) * (x+1), (SCREENHEIGHT / GRID_HEIGHT) * (y+2));
 }
@@ -153,26 +155,25 @@ void hide_marker()
 	set_sprite_tile(MARKER_NB, 0);
 }
 
-int wrap(int value, int max)
+int16_t wrap(int16_t value, int16_t max)
 {
 	if (value < 0) return max;
 	if (value > max) return 0;
 	return value;
 }
 
-
 struct loaded_tileset* loaded_game_tiles;
 
-void set_tile(int x, int y, unsigned char tile)
+void set_tile(int16_t x, int16_t y, uint8_t tile)
 {
 	place_tile(loaded_game_tiles, tile, x, y);
 }
 
 void render_board(struct board* board)
 {
-	int x, y;
+	int16_t x, y;
 	uint8_t* tile;
-	char sprite;
+	int8_t sprite;
 	for (x = 0;x<GRID_WIDTH;x += 1)
 	{
 		for (y = 0;y < GRID_HEIGHT;y += 1)
@@ -195,6 +196,8 @@ void render_board(struct board* board)
 
 void show_won_game()
 {
+	// Monotone bitmap where every element is row on screen.
+	// LSB is bottom of screen.
 	static const unsigned long bitmap[] = {
 		0x0000, 0x0000, 0x0F00, 0x30C0, 0x5020,
 		0x5220, 0xBB10, 0xBA90, 0x13A48, 0x11248,
@@ -202,12 +205,12 @@ void show_won_game()
 		0x5020, 0x30C0, 0x0F00, 0x0000, 0x000
 	};
 
-	int y, x;
+	int16_t y, x;
 	for (y = 0;y < GRID_HEIGHT; y++)
 	{
 		for (x = 0;x < GRID_WIDTH;x++)
 		{
-			int bit = (bitmap[x] >> ((GRID_HEIGHT - 1) - y)) & 1;
+			int8_t bit = (bitmap[x] >> ((GRID_HEIGHT - 1) - y)) & 1;
 			place_tile(loaded_game_tiles, bit ? White : Black, x, y);
 		}
 		delay(75);
@@ -218,23 +221,23 @@ void show_game_over()
 {
 	// Monotone bitmap where every element is row on screen.
 	// LSB is bottom of screen.
-	static const unsigned long bitmap[] = {
+	static const uint32_t bitmap[] = {
 		0x0000, 0x7DF0, 0x4510, 0x5510, 0x5DF0,
 		0x0000, 0x3DE0, 0x4810, 0x3DE0, 0x0000,
 		0x7DF0, 0x4150, 0x3110, 0x4000, 0x7DF0,
 		0x0140, 0x7DB0, 0x5400, 0x45D0, 0x0000
 	};
-	int sx = 0; // Spiral coordinates calculated from center
-	int sy = 0;
-	long N = GRID_WIDTH > GRID_HEIGHT ? GRID_WIDTH : GRID_HEIGHT;
-	long i;
+	int16_t sx = 0; // Spiral coordinates calculated from center
+	int16_t sy = 0;
+	int32_t N = GRID_WIDTH > GRID_HEIGHT ? GRID_WIDTH : GRID_HEIGHT;
+	int32_t i;
 
 	// Spiral.
 	for (i = 0; i < N*N; i++)
 	{
-		int x = GRID_WIDTH / 2 + sx - 1;
-		int y = GRID_HEIGHT / 2 + sy;
-		int bit = (bitmap[x] >> ((GRID_HEIGHT-1)-y)) & 1;
+		int16_t x = GRID_WIDTH / 2 + sx - 1;
+		int16_t y = GRID_HEIGHT / 2 + sy;
+		int8_t bit = (bitmap[x] >> ((GRID_HEIGHT-1)-y)) & 1;
 		set_tile(x,y, bit ? White : Black);
 
 		if (abs(sx) <= abs(sy) && (sx != sy || sx >= 0))
@@ -268,17 +271,19 @@ void show_select_to_view()
 	place_tiles(loaded_tileset, &select_to_view_map, 0, GRID_HEIGHT - select_to_view_map.height);
 }
 
-void play_game(int difficulty)
+void play_game(int8_t difficulty)
 {
 	bool first_open = true;
 	struct board* board;
 	uint8_t *game_memory = malloc(minimum_buffer_size(GRID_WIDTH, GRID_HEIGHT));
 	static unsigned char tilemap_buffer[GRID_WIDTH*GRID_HEIGHT];
 
+	// 1st seed
 	seed_prng();
 
 	board = board_init(GRID_WIDTH, GRID_HEIGHT, 0.1 * (difficulty+1), game_memory);
 	
+	// Prepare graphics
 	load_tiles();
 	show_marker();
 
@@ -303,6 +308,7 @@ void play_game(int difficulty)
 			// Add more entropy to prng first time we open a tile
 			if (first_open)
 			{
+				// 2nd seed
 				seed_prng();
 				first_open = false;
 			}
@@ -317,9 +323,10 @@ void play_game(int difficulty)
 		move_marker(board->cursor_x, board->cursor_y);
 		delay(75);
 	}
+
 	hide_marker();
 	
-
+	// Save current tilemap
 	get_bkg_tiles(0, 0, GRID_WIDTH, GRID_HEIGHT, tilemap_buffer);
 
 	if (board->_state == BOARD_WIN)
@@ -327,10 +334,12 @@ void play_game(int difficulty)
 	else if (board->_state == BOARD_GAME_OVER)
 		show_game_over();
 
+	// Add text to above screens
 	show_select_to_view();
 
 	while (1)
 	{
+		// While user presses select, temporarily show saved tilemap
 		if (button_pressed(J_SELECT, 0))
 		{
 			push_graphics();
@@ -340,7 +349,6 @@ void play_game(int difficulty)
 		}
 		if (button_pressed(J_START, -1) || button_pressed(J_A, -1))
 			break;
-
 	}
 
 	free(game_memory);

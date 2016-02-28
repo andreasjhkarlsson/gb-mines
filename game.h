@@ -1,5 +1,6 @@
 #ifndef GAME_H
 #define GAME_H
+#include <stdint.h>
 
 enum Difficulty
 {
@@ -9,6 +10,6 @@ enum Difficulty
 	INSANE = 3
 };
 
-void play_game(int difficulty);
+void play_game(int8_t difficulty);
 
 #endif

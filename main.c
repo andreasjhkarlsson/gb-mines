@@ -4,13 +4,11 @@
 #include <minesweeper.h>
 #include "start.h"
 #include "game.h"
-
+#include "about.h"
 
 void main()
 {
 	DISPLAY_ON;
-	while (1)
-	{
-		show_start();
-	}
+
+	show_start();
 }

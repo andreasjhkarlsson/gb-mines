@@ -250,17 +250,11 @@ TILEMAP (
 	0x78, 0x78, 0x78, 0x78, 0xD3, 0xD4, 0xD5, 0xD6
 );
 
-
-
 void show_about()
 {
-	
-	struct loaded_tileset* loaded_tiles;
 	HIDE_BKG;
-
-	loaded_tiles = load_tileset(&about_tileset);
-	place_tiles(loaded_tiles, &about_map, 0, 0);
-
+	place_tiles(load_tileset(&about_tileset), &about_map, 0, 0);
 	SHOW_BKG;
+
 	while (!button_pressed(J_START, -1) && !button_pressed(J_A, -1));
 }

@@ -242,9 +242,7 @@ TILEMAP(
 	0x0E, 0x0F, 0x10, 0x00
 );
 
-
-
-void show_difficulty(int difficulty)
+void show_difficulty(int8_t difficulty)
 {
 	struct loaded_tileset* tileset = 0;
 	struct tilemap* tilemap = 0;
@@ -278,8 +276,7 @@ void show_difficulty(int difficulty)
 
 void show_start()
 {
-
-	int difficulty = NORMAL;
+	int8_t difficulty = NORMAL;
 
 	place_tiles(load_tileset(&startscreen_tiles), &startscreen_map,0,0);
 
@@ -309,6 +306,7 @@ void show_start()
 			show_about();
 			pop_graphics();	
 		}
+
 		if (button_pressed(J_START, -1))
 		{
 			push_graphics();

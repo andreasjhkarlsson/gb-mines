@@ -2,7 +2,8 @@
 #define UTILS_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
-bool button_pressed(unsigned char button, int maxWait);
+bool button_pressed(uint8_t button, int16_t maxWait);
 
 #endif

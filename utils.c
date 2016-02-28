@@ -1,11 +1,12 @@
-#include "utils.h"
 #include <gb/gb.h>
+#include <stdint.h>
+#include "utils.h"
 
 // Returns true/false if a button was pressed
 // Optionally wait until button was released.
-bool button_pressed(unsigned char button, int maxWait)
+bool button_pressed(uint8_t button, int16_t maxWait)
 {
-	int i;
+	int16_t i;
 	if (!(joypad()&button))
 		return false;
 	
