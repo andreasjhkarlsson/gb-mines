@@ -284,13 +284,6 @@ void hide_marker()
 	set_sprite_tile(MARKER_NB, 0);
 }
 
-int16_t wrap(int16_t value, int16_t max)
-{
-	if (value < 0) return max;
-	if (value > max) return 0;
-	return value;
-}
-
 struct loaded_tileset* loaded_game_tiles;
 
 void set_tile(int16_t x, int16_t y, uint8_t tile)
@@ -428,7 +421,7 @@ void start_timer()
 {
 	disable_interrupts();
 	add_TIM(on_timer_overflow);
-	TAC_REG |= 4; // Start timer at 4096 Hz
+	TAC_REG = 4; // Start timer at 4096 Hz
 	TIMA_REG = 0; // Reset timer
 	TMA_REG = 0; // Restart timer at 0 on overflow
 	game_time = 0;
@@ -439,6 +432,7 @@ void start_timer()
 void stop_timer()
 {
 	disable_interrupts();
+	remove_TIM(on_timer_overflow);
 	TAC_REG = 0;
 	enable_interrupts();
 }
@@ -475,14 +469,18 @@ void render_board(struct board* board)
 }
 
 static unsigned char tilemap_buffer[20*18];
+static uint16_t display_time;
 
 void play_game(int8_t difficulty)
 {
-	uint16_t display_time = 0;
+	
 	bool first_open = true;
 	struct board* board;
 	uint8_t *game_memory = malloc(minimum_buffer_size(GRID_WIDTH, GRID_HEIGHT));
 	
+	game_time = 0;
+	display_time = 0;
+
 	// 1st seed
 	seed_prng();
 
