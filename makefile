@@ -6,7 +6,7 @@ CROM=$(GBDKN)/bin/gbdk-n-make-rom.sh
 bin/sweeper.gb: obj/main.rel obj/libminesweeper.rel obj/start.rel obj/game.rel obj/about.rel obj/graphics.rel obj/utils.rel
 	$(CL) obj/main.rel obj/start.rel obj/game.rel obj/libminesweeper.rel obj/about.rel obj/graphics.rel obj/utils.rel -o obj/a.ihx
 	mkdir -p bin
-	$(CROM) obj/a.ihx bin/sweeper.gb
+	$(CROM) -yn "GB MINES" obj/a.ihx bin/gbmines.gb
 
 obj/utils.rel: utils.c
 	mkdir -p obj
