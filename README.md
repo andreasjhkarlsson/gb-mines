@@ -14,4 +14,4 @@ A minesweeper implementation for the Nintendo Gameboy.
 
 
 #### Other
-  * Older versions of the sdcc compiler contains bugs that will produce buggy roms. Make sure you use the latest version of sdcc possible to avoid issues.
+  * Older versions of the sdcc compiler contains bugs that will produce buggy roms. Make sure you use the latest version of sdcc as possible to avoid issues.
