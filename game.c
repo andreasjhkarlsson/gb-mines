@@ -9,6 +9,9 @@
 #define GRID_WIDTH 20
 #define GRID_HEIGHT 16
 
+#define SCREEN_TILE_WIDTH 20
+#define SCREEN_TILE_HEIGHT 18
+
 #define MARKER_NB 0
 
 TILESET(
@@ -271,7 +274,7 @@ uint8_t digit_to_tile(uint8_t digit)
 
 void move_marker(int16_t x, int16_t y)
 {
-	move_sprite(MARKER_NB, (SCREENWIDTH / 20) * (x+1), (SCREENHEIGHT / 18) * (y+2));
+	move_sprite(MARKER_NB, (SCREENWIDTH / SCREEN_TILE_WIDTH) * (x+1), (SCREENHEIGHT / SCREEN_TILE_HEIGHT) * (y+2));
 }
 
 void show_marker()
@@ -300,25 +303,25 @@ void show_double_row_digit(uint8_t digit, uint8_t x, uint8_t y)
 
 void show_mine_count(uint16_t mines)
 {
-	show_double_row_digit((mines / 100) % 10, 4, 16);
-	show_double_row_digit((mines / 10) % 10, 5, 16);
-	show_double_row_digit(mines % 10, 6, 16);
+	show_double_row_digit((mines / 100) % 10, 4, SCREEN_TILE_HEIGHT-2);
+	show_double_row_digit((mines / 10) % 10, 5, SCREEN_TILE_HEIGHT-2);
+	show_double_row_digit(mines % 10, 6, SCREEN_TILE_HEIGHT-2);
 }
 
 void show_flag_count(uint16_t flags)
 {
-	show_double_row_digit((flags / 100) % 10, 11, 16);
-	show_double_row_digit((flags / 10) % 10, 12, 16);
-	show_double_row_digit(flags % 10, 13, 16);
+	show_double_row_digit((flags / 100) % 10, 11, SCREEN_TILE_HEIGHT-2);
+	show_double_row_digit((flags / 10) % 10, 12, SCREEN_TILE_HEIGHT-2);
+	show_double_row_digit(flags % 10, 13, SCREEN_TILE_HEIGHT-2);
 }
 
 
 
 void show_time(uint16_t time)
 {
-	show_double_row_digit((time / 100) % 10, 17, 16);
-	show_double_row_digit((time / 10) % 10, 18, 16);
-	show_double_row_digit(time % 10, 19, 16);
+	show_double_row_digit((time / 100) % 10, 17, SCREEN_TILE_HEIGHT-2);
+	show_double_row_digit((time / 10) % 10, 18, SCREEN_TILE_HEIGHT-2);
+	show_double_row_digit(time % 10, 19, SCREEN_TILE_HEIGHT-2);
 }
 
 
@@ -334,11 +337,11 @@ void show_won_game()
 	};
 
 	int16_t y, x;
-	for (y = 0;y < GRID_HEIGHT; y++)
+	for (y = 0;y < SCREEN_TILE_HEIGHT; y++)
 	{
-		for (x = 0;x < GRID_WIDTH;x++)
+		for (x = 0;x < SCREEN_TILE_WIDTH;x++)
 		{
-			int8_t bit = (bitmap[x] >> ((GRID_HEIGHT - 1) - y)) & 1;
+			int8_t bit = (bitmap[x] >> ((SCREEN_TILE_HEIGHT - 1) - y)) & 1;
 			place_tile(loaded_game_tiles, bit ? White : Black, x, y);
 		}
 		delay(75);
@@ -357,15 +360,14 @@ void show_game_over()
 	};
 	int16_t sx = 0; // Spiral coordinates calculated from center
 	int16_t sy = 0;
-	int32_t N = GRID_WIDTH > GRID_HEIGHT ? GRID_WIDTH : GRID_HEIGHT;
 	int32_t i;
 
 	// Spiral.
-	for (i = 0; i < N*N; i++)
+	for (i = 0; i < SCREEN_TILE_WIDTH*SCREEN_TILE_WIDTH; i++)
 	{
-		int16_t x = GRID_WIDTH / 2 + sx - 1;
-		int16_t y = GRID_HEIGHT / 2 + sy;
-		int8_t bit = (bitmap[x] >> ((GRID_HEIGHT-1)-y)) & 1;
+		int16_t x = SCREEN_TILE_WIDTH / 2 + sx - 1;
+		int16_t y = SCREEN_TILE_HEIGHT / 2 + sy;
+		int8_t bit = (bitmap[x] >> ((SCREEN_TILE_HEIGHT-1)-y)) & 1;
 		set_tile(x,y, bit ? White : Black);
 
 		if (abs(sx) <= abs(sy) && (sx != sy || sx >= 0))
@@ -396,17 +398,17 @@ void seed_prng()
 void show_select_to_view()
 {
 	struct loaded_tileset* loaded_tileset = load_tileset(&select_to_view_tiles);
-	place_tiles(loaded_tileset, &select_to_view_map, 0, GRID_HEIGHT - select_to_view_map.height);
+	place_tiles(loaded_tileset, &select_to_view_map, 0, SCREEN_TILE_HEIGHT - select_to_view_map.height);
 }
 
 void render_start_footer()
 {
-	place_tiles(load_tileset(&start_footer_tileset), &start_footer_tilemap, 0, 16);
+	place_tiles(load_tileset(&start_footer_tileset), &start_footer_tilemap, 0, SCREEN_TILE_HEIGHT-2);
 }
 
 void render_footer()
 {
-	place_tiles(load_tileset(&footer_tileset), &footer_tilemap, 0, 16);
+	place_tiles(load_tileset(&footer_tileset), &footer_tilemap, 0, SCREEN_TILE_HEIGHT-2);
 }
 
 static uint16_t game_time;
@@ -468,7 +470,7 @@ void render_board(struct board* board)
 	show_mine_count(board->_mine_count);
 }
 
-static unsigned char tilemap_buffer[20*18];
+static unsigned char tilemap_buffer[SCREEN_TILE_WIDTH*SCREEN_TILE_HEIGHT];
 static uint16_t display_time;
 
 void play_game(int8_t difficulty)
@@ -551,7 +553,7 @@ void play_game(int8_t difficulty)
 	hide_marker();
 	
 	// Save current tilemap
-	get_bkg_tiles(0, 0, 20, 18, tilemap_buffer);
+	get_bkg_tiles(0, 0, SCREEN_TILE_WIDTH, SCREEN_TILE_HEIGHT, tilemap_buffer);
 
 	if (board->_state == BOARD_WIN)
 		show_won_game();
@@ -567,7 +569,7 @@ void play_game(int8_t difficulty)
 		if (button_pressed(J_SELECT, 0))
 		{
 			push_graphics();
-			set_bkg_tiles(0, 0, 20, 18, tilemap_buffer);
+			set_bkg_tiles(0, 0, SCREEN_TILE_WIDTH, SCREEN_TILE_HEIGHT, tilemap_buffer);
 			while (button_pressed(J_SELECT, 0));
 			pop_graphics();
 		}
