@@ -503,13 +503,13 @@ void play_game(int8_t difficulty)
 	{
 		disable_interrupts();
 		if (button_pressed(J_UP, 0))
-			move_cursor(board, UP);
+			move_cursor(board, UP, true);
 		if (button_pressed(J_DOWN, 0))
-			move_cursor(board, DOWN);
+			move_cursor(board, DOWN, true);
 		if (button_pressed(J_LEFT, 0))
-			move_cursor(board, LEFT);
+			move_cursor(board, LEFT, true);
 		if (button_pressed(J_RIGHT, 0))
-			move_cursor(board, RIGHT);
+			move_cursor(board, RIGHT, true);
 		if (button_pressed(J_A, -1))
 		{
 			// Add more entropy to prng first time we open a tile
