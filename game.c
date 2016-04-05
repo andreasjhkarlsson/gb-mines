@@ -439,39 +439,45 @@ void stop_timer()
 	enable_interrupts();
 }
 
-void render_board(struct board* board)
+void render_tile(struct board* board, uint8_t *tile, int x, int y)
 {
-	int16_t x, y;
-	uint8_t* tile;
-	int8_t sprite;
-	uint16_t flag_count = 0;
-	for (x = 0;x < GRID_WIDTH;x += 1)
+	uint8_t sprite;
+
+	if (*tile&TILE_OPENED && *tile&TILE_MINE)
+		sprite = Mine;
+	else if (*tile&TILE_OPENED)
+		sprite = digit_to_tile(adjacent_mine_count(tile));
+	else if (*tile&TILE_FLAG)
 	{
-		for (y = 0;y < GRID_HEIGHT;y += 1)
+		sprite = Flagged;
+	}
+	else
+		sprite = Unopened;
+
+	set_tile(x, y, sprite);
+}
+
+void render_all_tiles(struct board* board)
+{
+	unsigned x, y;
+	for (x = 0;x < board->_width;x++)
+	{
+		for (y = 0; y < board->_height;y++)
 		{
-			tile = get_tile_at(board, x, y);
-
-			if (*tile&TILE_OPENED && *tile&TILE_MINE)
-				sprite = Mine;
-			else if (*tile&TILE_OPENED)
-				sprite = digit_to_tile(adjacent_mine_count(tile));
-			else if (*tile&TILE_FLAG)
-			{
-				sprite = Flagged;
-				flag_count++;
-			}
-			else
-				sprite = Unopened;
-
-			set_tile(x, y, sprite);
+			render_tile(board, get_tile_at(board, x, y), x, y);
 		}
 	}
-	show_flag_count(flag_count);
-	show_mine_count(board->_mine_count);
 }
 
 static unsigned char tilemap_buffer[SCREEN_TILE_WIDTH*SCREEN_TILE_HEIGHT];
 static uint16_t display_time;
+
+void update_hud(struct board* board)
+{
+	show_flag_count(board->_flag_count);
+	show_mine_count(board->_mine_count);
+	show_time(display_time);
+}
 
 void play_game(int8_t difficulty)
 {
@@ -487,6 +493,7 @@ void play_game(int8_t difficulty)
 	seed_prng();
 
 	board = board_init(GRID_WIDTH, GRID_HEIGHT, 0.1 * (difficulty+1), game_memory);
+	board->on_tile_updated = render_tile;
 	
 	// Prepare graphics
 	load_tiles();
@@ -496,8 +503,10 @@ void play_game(int8_t difficulty)
 	SHOW_SPRITES;
 	SPRITES_8x8;
 
-	render_board(board);
+	update_hud(board);
 	render_start_footer();
+
+	render_all_tiles(board);
 
 	while (board->_state != BOARD_GAME_OVER && board->_state != BOARD_WIN)
 	{
@@ -529,12 +538,12 @@ void play_game(int8_t difficulty)
 				first_open = false;
 			}
 
-			render_board(board);
+			update_hud(board);
 		}
 		if (button_pressed(J_B, -1))
 		{
 			toggle_flag_at_cursor(board);
-			render_board(board);
+			update_hud(board);
 		}
 
 		move_marker(board->cursor_x, board->cursor_y);
@@ -542,7 +551,7 @@ void play_game(int8_t difficulty)
 		if (display_time != game_time/16)
 		{
 			display_time = game_time/16;
-			show_time(display_time);
+			update_hud(board);
 		}
 
 		enable_interrupts();
