@@ -439,14 +439,15 @@ void stop_timer()
 	enable_interrupts();
 }
 
-void render_tile(struct board* board, uint8_t *tile, int x, int y)
+void render_tile(struct minesweeper_game* game, uint8_t *tile)
 {
 	uint8_t sprite;
+	unsigned x, y; minesweeper_get_tile_location(game, tile, &x, &y);
 
 	if (*tile&TILE_OPENED && *tile&TILE_MINE)
 		sprite = Mine;
 	else if (*tile&TILE_OPENED)
-		sprite = digit_to_tile(adjacent_mine_count(tile));
+		sprite = digit_to_tile(minesweeper_get_adjacent_mine_count(tile));
 	else if (*tile&TILE_FLAG)
 	{
 		sprite = Flagged;
@@ -457,14 +458,14 @@ void render_tile(struct board* board, uint8_t *tile, int x, int y)
 	set_tile(x, y, sprite);
 }
 
-void render_all_tiles(struct board* board)
+void render_all_tiles(struct minesweeper_game* game)
 {
 	unsigned x, y;
-	for (x = 0;x < board->_width;x++)
+	for (x = 0;x < game->width;x++)
 	{
-		for (y = 0; y < board->_height;y++)
+		for (y = 0; y < game->height;y++)
 		{
-			render_tile(board, get_tile_at(board, x, y), x, y);
+			render_tile(game, minesweeper_get_tile_at(game, x, y));
 		}
 	}
 }
@@ -472,19 +473,18 @@ void render_all_tiles(struct board* board)
 static unsigned char tilemap_buffer[SCREEN_TILE_WIDTH*SCREEN_TILE_HEIGHT];
 static uint16_t display_time;
 
-void update_hud(struct board* board)
+void update_hud(struct minesweeper_game* game)
 {
-	show_flag_count(board->_flag_count);
-	show_mine_count(board->_mine_count);
+	show_flag_count(game->flag_count);
+	show_mine_count(game->mine_count);
 	show_time(display_time);
 }
 
 void play_game(int8_t difficulty)
 {
-	
-	bool first_open = true;
-	struct board* board;
-	uint8_t *game_memory = malloc(minimum_buffer_size(GRID_WIDTH, GRID_HEIGHT));
+	unsigned x, y;
+	struct minesweeper_game* game;
+	uint8_t *game_memory = malloc(minesweeper_minimum_buffer_size(GRID_WIDTH, GRID_HEIGHT));
 	
 	game_time = 0;
 	display_time = 0;
@@ -492,8 +492,9 @@ void play_game(int8_t difficulty)
 	// 1st seed
 	seed_prng();
 
-	board = board_init(GRID_WIDTH, GRID_HEIGHT, 0.1 * (difficulty+1), game_memory);
-	board->on_tile_updated = render_tile;
+	game = minesweeper_init(GRID_WIDTH, GRID_HEIGHT, 0.1 * (difficulty+1), game_memory);
+	game->tile_update_callback = render_tile;
+	minesweeper_set_cursor(game, GRID_WIDTH / 2, GRID_HEIGHT / 2);
 	
 	// Prepare graphics
 	load_tiles();
@@ -503,55 +504,47 @@ void play_game(int8_t difficulty)
 	SHOW_SPRITES;
 	SPRITES_8x8;
 
-	update_hud(board);
+	update_hud(game);
 	render_start_footer();
 
-	render_all_tiles(board);
+	render_all_tiles(game);
 
-	while (board->_state != BOARD_GAME_OVER && board->_state != BOARD_WIN)
+	while (game->state != MINESWEEPER_GAME_OVER && game->state != MINESWEEPER_WIN)
 	{
 		disable_interrupts();
 		if (button_pressed(J_UP, 0))
-			move_cursor(board, UP, true);
+			minesweeper_move_cursor(game, UP, true);
 		if (button_pressed(J_DOWN, 0))
-			move_cursor(board, DOWN, true);
+			minesweeper_move_cursor(game, DOWN, true);
 		if (button_pressed(J_LEFT, 0))
-			move_cursor(board, LEFT, true);
+			minesweeper_move_cursor(game, LEFT, true);
 		if (button_pressed(J_RIGHT, 0))
-			move_cursor(board, RIGHT, true);
+			minesweeper_move_cursor(game, RIGHT, true);
 		if (button_pressed(J_A, -1))
 		{
-			// Add more entropy to prng first time we open a tile
-			if (first_open)
+			if (game->state == MINESWEEPER_PENDING_START)
 			{
-				// 2nd seed
-				seed_prng();
 				render_footer();
 				show_time(0);
-			}
-			
-			open_tile_at_cursor(board);
-
-			if (first_open)
-			{
 				start_timer();
-				first_open = false;
 			}
 
-			update_hud(board);
+			minesweeper_open_tile(game, game->selected_tile);
+			update_hud(game);
 		}
 		if (button_pressed(J_B, -1))
 		{
-			toggle_flag_at_cursor(board);
-			update_hud(board);
+			minesweeper_toggle_flag(game, game->selected_tile);
+			update_hud(game);
 		}
 
-		move_marker(board->cursor_x, board->cursor_y);
+		minesweeper_get_tile_location(game, game->selected_tile, &x, &y);
+		move_marker(x, y);
 
 		if (display_time != game_time/16)
 		{
 			display_time = game_time/16;
-			update_hud(board);
+			update_hud(game);
 		}
 
 		enable_interrupts();
@@ -564,9 +557,9 @@ void play_game(int8_t difficulty)
 	// Save current tilemap
 	get_bkg_tiles(0, 0, SCREEN_TILE_WIDTH, SCREEN_TILE_HEIGHT, tilemap_buffer);
 
-	if (board->_state == BOARD_WIN)
+	if (game->state == MINESWEEPER_WIN)
 		show_won_game();
-	else if (board->_state == BOARD_GAME_OVER)
+	else if (game->state == MINESWEEPER_GAME_OVER)
 		show_game_over();
 
 	// Add text to above screens
