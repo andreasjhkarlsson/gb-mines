@@ -307,8 +307,11 @@ void show_start()
 			pop_graphics();	
 		}
 
-		if (button_pressed(J_START, -1))
+		if (button_pressed(J_START, 0))
 		{
+			seed_prng(); // First seed on button down
+			button_pressed(J_START, -1); // Block until release
+			seed_prng(); // Second seed on button up for 16-bit entropy
 			push_graphics();
 			play_game(difficulty);
 			pop_graphics();
