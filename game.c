@@ -388,13 +388,6 @@ void load_tiles()
 	set_sprite_data(0, 2, sprites);
 }
 
-// Seed prng using current time (8 bit) and previous seed.
-// Call multiple times at unpredictable moments (like user input) to increase entropy.
-void seed_prng()
-{
-	srand((rand()<<8)|DIV_REG);
-}
-
 void show_select_to_view()
 {
 	struct loaded_tileset* loaded_tileset = load_tileset(&select_to_view_tiles);
@@ -488,9 +481,6 @@ void play_game(int8_t difficulty)
 	
 	game_time = 0;
 	display_time = 0;
-
-	// 1st seed
-	seed_prng();
 
 	game = minesweeper_init(GRID_WIDTH, GRID_HEIGHT, 0.1 * (difficulty+1), game_memory);
 	game->tile_update_callback = render_tile;

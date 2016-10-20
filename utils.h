@@ -5,5 +5,6 @@
 #include <stdint.h>
 
 bool button_pressed(uint8_t button, int16_t maxWait);
+void seed_prng();
 
 #endif
