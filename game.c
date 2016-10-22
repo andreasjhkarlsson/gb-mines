@@ -437,7 +437,7 @@ void render_tile(struct minesweeper_game* game, uint8_t *tile)
 	uint8_t sprite;
 	unsigned x, y; minesweeper_get_tile_location(game, tile, &x, &y);
 
-	if (*tile&TILE_OPENED && *tile&TILE_MINE)
+	if (*tile&TILE_MINE && (*tile&TILE_OPENED || game->state == MINESWEEPER_GAME_OVER))
 		sprite = Mine;
 	else if (*tile&TILE_OPENED)
 		sprite = digit_to_tile(minesweeper_get_adjacent_mine_count(tile));
@@ -451,14 +451,18 @@ void render_tile(struct minesweeper_game* game, uint8_t *tile)
 	set_tile(x, y, sprite);
 }
 
-void render_all_tiles(struct minesweeper_game* game)
+void render_all_tiles(struct minesweeper_game* game, bool mines_only)
 {
+	uint8_t *tile;
 	unsigned x, y;
 	for (x = 0;x < game->width;x++)
 	{
 		for (y = 0; y < game->height;y++)
 		{
-			render_tile(game, minesweeper_get_tile_at(game, x, y));
+			tile = minesweeper_get_tile_at(game, x, y);
+			if (mines_only && !(*tile&TILE_MINE))
+				continue;
+			render_tile(game, tile);
 		}
 	}
 }
@@ -527,7 +531,7 @@ void play_game(int8_t difficulty)
 	update_hud(game);
 	render_start_footer();
 
-	render_all_tiles(game);
+	render_all_tiles(game, false);
 
 	while (game->state != MINESWEEPER_GAME_OVER && game->state != MINESWEEPER_WIN)
 	{
@@ -570,6 +574,12 @@ void play_game(int8_t difficulty)
 	stop_timer();
 	hide_marker();
 	
+
+	if (game->state == MINESWEEPER_GAME_OVER)
+    {
+		render_all_tiles(game, true);
+    }
+
 	// Save current tilemap
 	get_bkg_tiles(0, 0, SCREEN_TILE_WIDTH, SCREEN_TILE_HEIGHT, tilemap_buffer);
 
