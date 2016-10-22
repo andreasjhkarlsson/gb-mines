@@ -473,9 +473,39 @@ void update_hud(struct minesweeper_game* game)
 	show_time(display_time);
 }
 
+struct navigation
+{
+	uint8_t button;
+	enum direction direction;
+	uint16_t hold; // Number of iterations in a row the button has been pressed
+};
+
+void handle_navigation(struct minesweeper_game* game, struct navigation* navigation)
+{
+	if (button_pressed(navigation->button, 0))
+	{
+		// Immediately respond to first press, but then wait 8 iters before
+		// moving again if the button is not released
+		if (navigation->hold == 0 || navigation->hold > 8)
+			minesweeper_move_cursor(game, navigation->direction, true);
+		navigation->hold += 1;
+	}
+	else
+	{
+		navigation->hold = 0;
+	}
+}
+
 void play_game(int8_t difficulty)
 {
+	struct navigation navigations[4] = {
+		{ .button = J_UP,    .direction = UP,    .hold = 0 },
+		{ .button = J_DOWN,  .direction = DOWN,  .hold = 0 },
+		{ .button = J_LEFT,  .direction = LEFT,  .hold = 0 },
+		{ .button = J_RIGHT, .direction = RIGHT, .hold = 0 }
+	};
 	unsigned x, y;
+	unsigned i;
 	struct minesweeper_game* game;
 	uint8_t *game_memory = malloc(minesweeper_minimum_buffer_size(GRID_WIDTH, GRID_HEIGHT));
 	
@@ -502,14 +532,10 @@ void play_game(int8_t difficulty)
 	while (game->state != MINESWEEPER_GAME_OVER && game->state != MINESWEEPER_WIN)
 	{
 		disable_interrupts();
-		if (button_pressed(J_UP, 0))
-			minesweeper_move_cursor(game, UP, true);
-		if (button_pressed(J_DOWN, 0))
-			minesweeper_move_cursor(game, DOWN, true);
-		if (button_pressed(J_LEFT, 0))
-			minesweeper_move_cursor(game, LEFT, true);
-		if (button_pressed(J_RIGHT, 0))
-			minesweeper_move_cursor(game, RIGHT, true);
+
+		for (i = 0; i < sizeof(navigations) / sizeof(navigations[0]); i += 1)
+			handle_navigation(game, &navigations[i]);
+
 		if (button_pressed(J_A, -1))
 		{
 			if (game->state == MINESWEEPER_PENDING_START)
@@ -538,7 +564,7 @@ void play_game(int8_t difficulty)
 		}
 
 		enable_interrupts();
-		delay(75);
+		delay(50);
 	}
 
 	stop_timer();
