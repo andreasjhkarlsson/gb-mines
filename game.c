@@ -432,16 +432,16 @@ void stop_timer()
 	enable_interrupts();
 }
 
-void render_tile(struct minesweeper_game* game, uint8_t *tile)
+void render_tile(struct minesweeper_game* game, struct minesweeper_tile* tile, void* context)
 {
 	uint8_t sprite;
 	unsigned x, y; minesweeper_get_tile_location(game, tile, &x, &y);
 
-	if (*tile&TILE_MINE && (*tile&TILE_OPENED || game->state == MINESWEEPER_GAME_OVER))
+	if (tile->has_mine && (tile->is_opened || game->state == MINESWEEPER_GAME_OVER))
 		sprite = Mine;
-	else if (*tile&TILE_OPENED)
-		sprite = digit_to_tile(minesweeper_get_adjacent_mine_count(tile));
-	else if (*tile&TILE_FLAG)
+	else if (tile->is_opened)
+		sprite = digit_to_tile(tile->adjacent_mine_count);
+	else if (tile->has_flag)
 	{
 		sprite = Flagged;
 	}
@@ -453,16 +453,16 @@ void render_tile(struct minesweeper_game* game, uint8_t *tile)
 
 void render_all_tiles(struct minesweeper_game* game, bool mines_only)
 {
-	uint8_t *tile;
+	struct minesweeper_tile *tile;
 	unsigned x, y;
 	for (x = 0;x < game->width;x++)
 	{
 		for (y = 0; y < game->height;y++)
 		{
 			tile = minesweeper_get_tile_at(game, x, y);
-			if (mines_only && !(*tile&TILE_MINE))
+			if (mines_only && !tile->has_mine)
 				continue;
-			render_tile(game, tile);
+			render_tile(game, tile, NULL);
 		}
 	}
 }
